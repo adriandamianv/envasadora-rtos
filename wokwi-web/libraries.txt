@@ -1,0 +1,4 @@
+HX711
+PubSubClient
+LiquidCrystal I2C
+ArduinoJson

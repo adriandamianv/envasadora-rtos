@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "author": "Equipo Envasadora — Proyecto Final SO",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0 },
+    { "type": "wokwi-hx711", "id": "hx1", "top": -160, "left": -180, "attrs": { "type": "5kg" } },
+    { "type": "wokwi-relay-module", "id": "rel1", "top": -170, "left": 220 },
+    { "type": "wokwi-lcd1602", "id": "lcd1", "top": 230, "left": -60, "attrs": { "pins": "i2c" } },
+    { "type": "wokwi-led", "id": "led_ok", "top": 40, "left": 280, "attrs": { "color": "green", "label": "OK" } },
+    { "type": "wokwi-led", "id": "led_al", "top": 40, "left": 350, "attrs": { "color": "red", "label": "ALARMA" } },
+    { "type": "wokwi-resistor", "id": "r1", "top": 90, "left": 280, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "r2", "top": 90, "left": 350, "attrs": { "value": "220" } },
+    { "type": "wokwi-pushbutton", "id": "btn_ini", "top": 160, "left": 280, "attrs": { "color": "green", "label": "INICIO" } },
+    { "type": "wokwi-pushbutton", "id": "btn_paro", "top": 160, "left": 360, "attrs": { "color": "red", "label": "PARO" } }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "" ],
+    [ "esp:RX", "$serialMonitor:TX", "" ],
+    [ "hx1:VCC", "esp:3V3", "red" ],
+    [ "hx1:GND", "esp:GND.1", "black" ],
+    [ "hx1:DT", "esp:16", "gold" ],
+    [ "hx1:SCK", "esp:4", "gold" ],
+    [ "rel1:VCC", "esp:5V", "red" ],
+    [ "rel1:GND", "esp:GND.2", "black" ],
+    [ "rel1:IN", "esp:26", "orange" ],
+    [ "lcd1:VCC", "esp:5V", "red" ],
+    [ "lcd1:GND", "esp:GND.1", "black" ],
+    [ "lcd1:SDA", "esp:21", "green" ],
+    [ "lcd1:SCL", "esp:22", "yellow" ],
+    [ "led_ok:A", "r1:1", "green" ],
+    [ "r1:2", "esp:27", "green" ],
+    [ "led_ok:C", "esp:GND.1", "black" ],
+    [ "led_al:A", "r2:1", "red" ],
+    [ "r2:2", "esp:14", "red" ],
+    [ "led_al:C", "esp:GND.1", "black" ],
+    [ "btn_ini:1.l", "esp:32", "gray" ],
+    [ "btn_ini:2.l", "esp:GND.1", "black" ],
+    [ "btn_paro:1.l", "esp:33", "gray" ],
+    [ "btn_paro:2.l", "esp:GND.1", "black" ]
+  ]
+}

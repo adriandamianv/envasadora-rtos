@@ -28,6 +28,20 @@ def inicio():
     )
 
 
+@bp.route("/salud")
+def salud():
+    """Diagnóstico: estado del backend y su conexión MQTT (sin login)."""
+    from flask import current_app
+    from extensions import mqtt
+    return {
+        "estado": "ok",
+        "mqtt_conectado": bool(getattr(mqtt, "connected", False)),
+        "broker": current_app.config.get("MQTT_BROKER_URL"),
+        "puerto": current_app.config.get("MQTT_BROKER_PORT"),
+        "transporte": current_app.config.get("MQTT_TRANSPORT", "tcp"),
+    }
+
+
 @bp.route("/maquina/<accion>", methods=["POST"])
 @rol_requerido("supervisor", "gerente")
 def maquina(accion: str):
