@@ -33,9 +33,12 @@ def create_app(iniciar_mqtt: bool = True) -> Flask:
         from adaptadores.mqtt_in import init_mqtt
         init_mqtt(app)
 
-    # Asegura que las tablas existan (idempotente; los datos los crea seeds.py)
+    # Asegura tablas y datos iniciales (idempotente): en Render no hay shell
+    # para correr seeds.py, así que la app se autosiembra si la base está vacía.
     with app.app_context():
-        db.create_all()
+        from seeds import sembrar_datos
+        if sembrar_datos():
+            app.logger.info("Base vacía: datos iniciales sembrados.")
 
     return app
 
