@@ -1,0 +1,8 @@
+flask==3.0.3
+flask-sqlalchemy==3.1.1
+flask-socketio==5.3.6
+flask-mqtt==1.2.1
+paho-mqtt==1.6.1
+gunicorn==22.0.0
+psycopg2-binary==2.9.10
+werkzeug==3.0.3

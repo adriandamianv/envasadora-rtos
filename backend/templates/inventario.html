@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block titulo %}Inventario · Envasadora ENV01{% endblock %}
+{% block contenido %}
+<h1>Inventario de materias primas</h1>
+
+<section class="tarjeta">
+  <table>
+    <thead>
+      <tr><th>Materia prima</th><th>Disponible</th><th>Unidad</th><th>Ajustar a</th></tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ item.materia_prima }}</td>
+        <td>{{ '%.2f'|format(item.cantidad_disponible) }}</td>
+        <td>{{ item.unidad_medida }}</td>
+        <td>
+          <form method="post" action="{{ url_for('inventario.ajustar', item_id=item.id) }}"
+                class="formulario-linea">
+            <input type="number" name="cantidad" step="0.01" min="0"
+                   value="{{ item.cantidad_disponible }}">
+            <button type="submit" class="boton chico">Guardar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="silencioso">El consumo automático se descuenta con cada unidad aceptada
+     reportada por la envasadora (tópico <code>unidad</code>).</p>
+</section>
+{% endblock %}

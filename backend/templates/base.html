@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Envasadora ENV01{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='estilo.css') }}">
+</head>
+<body>
+  <header class="barra">
+    <div class="marca">
+      <span class="led"></span> ENVASADORA <strong>ENV01</strong>
+      <small>productos secos · RTOS</small>
+    </div>
+    {% if session.get('usuario_id') %}
+    <nav>
+      <a href="{{ url_for('panel.inicio') }}">Panel</a>
+      {% if session.rol in ('supervisor', 'gerente') %}
+        <a href="{{ url_for('ordenes.listar') }}">Órdenes</a>
+        <a href="{{ url_for('inventario.listar') }}">Inventario</a>
+      {% endif %}
+      {% if session.rol == 'gerente' %}
+        <a href="{{ url_for('reportes.inicio') }}">Reportes</a>
+      {% endif %}
+      <span class="usuario">{{ session.nombre }} · {{ session.rol }}</span>
+      <a class="salir" href="{{ url_for('auth.logout') }}">Salir</a>
+    </nav>
+    {% endif %}
+  </header>
+
+  <main>
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+      {% for categoria, mensaje in mensajes %}
+        <div class="aviso aviso-{{ categoria }}">{{ mensaje }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block contenido %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

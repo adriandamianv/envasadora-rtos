@@ -1,0 +1,21 @@
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:1156
+load:0x40078000,len:11456
+ho 0 tail 12 room 4
+load:0x40080400,len:2972
+entry 0x400805dc
+[BOOT] envasadora lista[WIFI] conectando...
+[ORDEN] iniciada producto=mani presentacion=25g lote=50
+[UNIDAD] n=1 peso=24.73 ok=1
+[MQTT] conectado y suscrito a cmd
+[METRICA] peor_ciclo_control=1665us peor_ciclo_bascula=76us heap_libre=222892
+[UNIDAD] n=2 peso=25.01 ok=1
+[UNIDAD] n=3 peso=25.24 ok=1
+[UNIDAD] n=4 peso=25.50 ok=1
+[UNIDAD] n=5 peso=25.21 ok=1
+[METRICA]

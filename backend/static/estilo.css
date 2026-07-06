@@ -1,0 +1,166 @@
+/* Estética industrial oscura para la envasadora ENV01. Sin frameworks. */
+:root {
+  --fondo: #101418;
+  --panel: #1a2027;
+  --borde: #2c3540;
+  --texto: #d7dde3;
+  --apagado: #7e8b98;
+  --acento: #f2a33c;      /* ámbar industrial */
+  --ok: #4cc38a;
+  --mal: #e5534b;
+  --fuente-mono: "JetBrains Mono", "Consolas", monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+/* ---------- Barra superior ---------- */
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.7rem 1.2rem;
+  background: var(--panel);
+  border-bottom: 2px solid var(--acento);
+}
+
+.marca {
+  font-family: var(--fuente-mono);
+  letter-spacing: 0.08em;
+  font-size: 1.05rem;
+}
+.marca strong { color: var(--acento); }
+.marca small { color: var(--apagado); margin-left: 0.6rem; letter-spacing: 0; }
+
+.led {
+  display: inline-block;
+  width: 0.65rem; height: 0.65rem;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 6px var(--ok);
+  margin-right: 0.4rem;
+}
+
+nav { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+nav a { color: var(--texto); text-decoration: none; padding: 0.25rem 0.4rem; }
+nav a:hover { color: var(--acento); }
+nav .usuario { color: var(--apagado); font-size: 0.85rem; }
+nav .salir { color: var(--mal); }
+
+/* ---------- Contenido ---------- */
+main { max-width: 1100px; margin: 1.5rem auto; padding: 0 1rem; }
+h1 { font-size: 1.4rem; margin-bottom: 1rem; letter-spacing: 0.03em; }
+h2 {
+  font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--apagado); margin-bottom: 0.8rem;
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tarjeta {
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.silencioso { color: var(--apagado); font-size: 0.85rem; margin-top: 0.6rem; }
+code { font-family: var(--fuente-mono); color: var(--acento); }
+
+/* ---------- Medidor de peso y FSM ---------- */
+.medidor {
+  font-family: var(--fuente-mono);
+  font-size: 3rem;
+  color: var(--acento);
+  text-align: center;
+  padding: 0.5rem 0;
+}
+.medidor small { font-size: 1.2rem; color: var(--apagado); }
+
+.fsm {
+  font-family: var(--fuente-mono);
+  font-size: 1.4rem;
+  text-align: center;
+  padding: 0.6rem;
+  border: 1px dashed var(--borde);
+  border-radius: 4px;
+  margin-bottom: 0.6rem;
+  color: var(--acento);
+}
+
+.contadores { display: flex; justify-content: space-around; text-align: center; }
+.contadores span { font-family: var(--fuente-mono); font-size: 2rem; display: block; }
+.contadores label { color: var(--apagado); font-size: 0.75rem; text-transform: uppercase; }
+
+.alarma {
+  padding: 0.5rem; border-radius: 4px; text-align: center;
+  font-family: var(--fuente-mono);
+}
+.alarma.mal { background: rgba(229, 83, 75, 0.15); color: var(--mal); border: 1px solid var(--mal); }
+.alarma.ok { background: rgba(76, 195, 138, 0.15); color: var(--ok); border: 1px solid var(--ok); }
+.oculto { display: none; }
+
+/* ---------- Tablas ---------- */
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th, td { padding: 0.45rem 0.6rem; text-align: left; border-bottom: 1px solid var(--borde); }
+th { color: var(--apagado); text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.08em; }
+td.ok, .ok { color: var(--ok); }
+td.mal, .mal { color: var(--mal); }
+
+.estado {
+  font-family: var(--fuente-mono); font-size: 0.78rem;
+  padding: 0.15rem 0.5rem; border-radius: 3px; text-transform: uppercase;
+}
+.estado-pendiente { background: rgba(126, 139, 152, 0.2); color: var(--apagado); }
+.estado-en_proceso { background: rgba(242, 163, 60, 0.18); color: var(--acento); }
+.estado-completada { background: rgba(76, 195, 138, 0.18); color: var(--ok); }
+
+/* ---------- Formularios ---------- */
+form label { display: block; margin-bottom: 0.7rem; font-size: 0.85rem; color: var(--apagado); }
+input, select {
+  display: block; width: 100%; margin-top: 0.25rem;
+  background: var(--fondo); color: var(--texto);
+  border: 1px solid var(--borde); border-radius: 4px;
+  padding: 0.45rem 0.6rem; font-size: 0.95rem;
+}
+input:focus, select:focus { outline: 1px solid var(--acento); }
+
+.formulario-linea { display: flex; gap: 0.8rem; align-items: flex-end; flex-wrap: wrap; }
+.formulario-linea label { margin-bottom: 0; flex: 1 1 140px; }
+.formulario-linea input, .formulario-linea select { width: 100%; }
+
+.boton {
+  background: var(--acento); color: #14181c;
+  border: none; border-radius: 4px;
+  padding: 0.5rem 1.1rem; font-weight: 600; cursor: pointer;
+}
+.boton:hover { filter: brightness(1.1); }
+.boton.chico { padding: 0.25rem 0.7rem; font-size: 0.78rem; }
+.boton.peligro { background: var(--mal); color: #fff; }
+
+.acciones form { display: inline; }
+
+/* ---------- Login ---------- */
+.login { max-width: 380px; margin: 4rem auto; }
+.login h1 { margin-bottom: 0.3rem; }
+.login .boton { width: 100%; margin-top: 0.5rem; }
+
+/* ---------- Avisos flash ---------- */
+.aviso { padding: 0.6rem 1rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem; }
+.aviso-ok { background: rgba(76, 195, 138, 0.15); color: var(--ok); border: 1px solid var(--ok); }
+.aviso-error, .aviso-message { background: rgba(229, 83, 75, 0.15); color: var(--mal); border: 1px solid var(--mal); }

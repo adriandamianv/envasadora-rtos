@@ -1,0 +1,22 @@
+# Prueba automatizada con wokwi-cli:
+#   wokwi-cli firmware/ --scenario escenarios/llenado_basico.scenario.yaml --timeout 90000
+# Verifica: arranque, inicio de orden por botón y producción de las primeras unidades.
+# Nota: no se espera "[ORDEN] iniciada" porque se imprime en el instante de la
+# pulsación (ISR) y wait-serial solo ve texto posterior al inicio del paso.
+name: llenado-basico
+version: 1
+steps:
+  - wait-serial: "[BOOT] envasadora lista"
+  - delay: 2000ms
+  - set-control:
+      part-id: btn_ini
+      control: pressed
+      value: 1
+  - delay: 150ms
+  - set-control:
+      part-id: btn_ini
+      control: pressed
+      value: 0
+  - wait-serial: "[UNIDAD] n=1"
+  - wait-serial: "[UNIDAD] n=3"
+  - wait-serial: "[METRICA]"

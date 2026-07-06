@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block titulo %}Reportes · Envasadora ENV01{% endblock %}
+{% block contenido %}
+<h1>Reportes de producción</h1>
+
+<section class="tarjeta">
+  <h2>Lotes por día
+    <a class="boton chico" href="{{ url_for('reportes.csv_lotes_dia') }}">Exportar CSV</a>
+  </h2>
+  <table>
+    <thead><tr><th>Fecha</th><th>Lotes</th><th>Producidas</th><th>Rechazadas</th></tr></thead>
+    <tbody>
+      {% for r in lotes_dia %}
+      <tr><td>{{ r.fecha_produccion }}</td><td>{{ r.lotes }}</td>
+          <td>{{ r.producidas or 0 }}</td><td>{{ r.rechazadas or 0 }}</td></tr>
+      {% else %}
+      <tr><td colspan="4" class="silencioso">Sin producción registrada.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="tarjeta">
+  <h2>% de rechazo por lote
+    <a class="boton chico" href="{{ url_for('reportes.csv_rechazo') }}">Exportar CSV</a>
+  </h2>
+  <table>
+    <thead><tr><th>Lote</th><th>Producidas</th><th>Rechazadas</th>
+               <th>% rechazo</th><th>Peso promedio (g)</th></tr></thead>
+    <tbody>
+      {% for lote, prod, rech, pct, promedio in rechazo %}
+      <tr><td>{{ lote }}</td><td>{{ prod }}</td><td>{{ rech }}</td>
+          <td class="{{ 'mal' if pct > 5 else 'ok' }}">{{ pct }} %</td><td>{{ promedio }}</td></tr>
+      {% else %}
+      <tr><td colspan="5" class="silencioso">Sin lotes registrados.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="tarjeta">
+  <h2>Historial por operador
+    <a class="boton chico" href="{{ url_for('reportes.csv_operadores') }}">Exportar CSV</a>
+  </h2>
+  <table>
+    <thead><tr><th>Operador</th><th>Total unidades</th><th>Aceptadas</th>
+               <th>Peso promedio (g)</th></tr></thead>
+    <tbody>
+      {% for r in operadores %}
+      <tr><td>{{ r.nombre }}</td><td>{{ r.total }}</td><td>{{ r.aceptadas or 0 }}</td>
+          <td>{{ '%.2f'|format(r.peso_promedio) if r.peso_promedio is not none else '-' }}</td></tr>
+      {% else %}
+      <tr><td colspan="4" class="silencioso">Sin registros de operadores.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

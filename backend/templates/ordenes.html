@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block titulo %}Órdenes · Envasadora ENV01{% endblock %}
+{% block contenido %}
+<h1>Órdenes de producción</h1>
+
+<section class="tarjeta">
+  <h2>Nueva orden</h2>
+  <form method="post" action="{{ url_for('ordenes.crear') }}" class="formulario-linea">
+    <label>Producto
+      <select name="producto_id" required>
+        {% for p in productos %}
+        <option value="{{ p.id }}">{{ p.nombre }} {{ p.presentacion_gr }} g</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Tamaño de lote
+      <select name="tam_lote">
+        <option value="50">50 unidades</option>
+        <option value="100">100 unidades</option>
+      </select>
+    </label>
+    <label>Cantidad solicitada
+      <input type="number" name="cantidad_solicitada" min="1" value="50" required>
+    </label>
+    <button type="submit" class="boton">Crear orden</button>
+  </form>
+</section>
+
+<section class="tarjeta">
+  <h2>Listado</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Fecha</th><th>Producto</th><th>Lote</th><th>Solicitadas</th>
+          <th>Estado</th><th>Operador</th><th>Acciones</th></tr>
+    </thead>
+    <tbody>
+      {% for o in ordenes %}
+      <tr>
+        <td>{{ o.id }}</td>
+        <td>{{ o.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+        <td>{{ o.producto.nombre }} {{ o.producto.presentacion_gr }} g</td>
+        <td>{{ o.tam_lote }}</td>
+        <td>{{ o.cantidad_solicitada }}</td>
+        <td><span class="estado estado-{{ o.estado }}">{{ o.estado.replace('_', ' ') }}</span></td>
+        <td>{{ o.operador.nombre if o.operador else '-' }}</td>
+        <td class="acciones">
+          {% if o.estado == 'pendiente' %}
+          <form method="post" action="{{ url_for('ordenes.iniciar', orden_id=o.id) }}">
+            <button type="submit" class="boton chico">Iniciar</button>
+          </form>
+          {% elif o.estado == 'en_proceso' %}
+          <form method="post" action="{{ url_for('ordenes.detener', orden_id=o.id) }}">
+            <button type="submit" class="boton chico peligro">Detener</button>
+          </form>
+          {% else %}
+          —
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" class="silencioso">Sin órdenes registradas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

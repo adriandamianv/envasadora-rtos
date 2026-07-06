@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proyecto RTOS — brief técnico</title>
+<style>
+  :root {
+    --page: #eef0f1;
+    --card: #f9fafa;
+    --card-2: #f1f3f4;
+    --ink: #14181b;
+    --ink-2: #4c555c;
+    --muted: #7d868d;
+    --line: #d9dde0;
+    --line-soft: #e6e9eb;
+    --accent: #b97a08;
+    --accent-mark: #e8a01a;
+    --accent-wash: rgba(232, 160, 26, 0.10);
+    --critical: #d03b3b;
+    --critical-wash: rgba(208, 59, 59, 0.10);
+    --ok: #0a7d3c;
+    --s-informe: #2a78d6;
+    --s-diseno: #1baf7a;
+    --s-software: #eda100;
+    --s-iot: #008300;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page: #0e1114;
+      --card: #161a1e;
+      --card-2: #1c2126;
+      --ink: #f0f3f4;
+      --ink-2: #aeb6bc;
+      --muted: #7d868d;
+      --line: #262c31;
+      --line-soft: #20262b;
+      --accent: #f2b13d;
+      --accent-mark: #e8a01a;
+      --accent-wash: rgba(232, 160, 26, 0.09);
+      --critical: #e05252;
+      --critical-wash: rgba(224, 82, 82, 0.12);
+      --ok: #3dbd72;
+      --s-informe: #3987e5;
+      --s-diseno: #199e70;
+      --s-software: #c98500;
+      --s-iot: #008300;
+    }
+  }
+  :root[data-theme="light"] {
+    --page: #eef0f1; --card: #f9fafa; --card-2: #f1f3f4;
+    --ink: #14181b; --ink-2: #4c555c; --muted: #7d868d;
+    --line: #d9dde0; --line-soft: #e6e9eb;
+    --accent: #b97a08; --accent-mark: #e8a01a; --accent-wash: rgba(232,160,26,0.10);
+    --critical: #d03b3b; --critical-wash: rgba(208,59,59,0.10); --ok: #0a7d3c;
+    --s-informe: #2a78d6; --s-diseno: #1baf7a; --s-software: #eda100; --s-iot: #008300;
+  }
+  :root[data-theme="dark"] {
+    --page: #0e1114; --card: #161a1e; --card-2: #1c2126;
+    --ink: #f0f3f4; --ink-2: #aeb6bc; --muted: #7d868d;
+    --line: #262c31; --line-soft: #20262b;
+    --accent: #f2b13d; --accent-mark: #e8a01a; --accent-wash: rgba(232,160,26,0.09);
+    --critical: #e05252; --critical-wash: rgba(224,82,82,0.12); --ok: #3dbd72;
+    --s-informe: #3987e5; --s-diseno: #199e70; --s-software: #c98500; --s-iot: #008300;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 20px 80px;
+    font-size: 16px;
+  }
+  .wrap { max-width: 950px; margin: 0 auto; }
+
+  /* ---------- hero ---------- */
+  header { padding: 56px 0 36px; border-bottom: 2px solid var(--ink); }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 16px;
+  }
+  h1 {
+    font-size: clamp(30px, 5.4vw, 50px);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.06;
+    margin: 0 0 14px;
+    text-wrap: balance;
+  }
+  .lede { font-size: 18px; color: var(--ink-2); max-width: 64ch; margin: 0 0 26px; text-wrap: pretty; }
+  .lede strong { color: var(--ink); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-family: var(--mono); font-size: 12px;
+    border: 1px solid var(--line); border-radius: 3px;
+    padding: 5px 10px; background: var(--card);
+    color: var(--ink-2); white-space: nowrap;
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip.alert { border-color: var(--critical); background: var(--critical-wash); color: var(--critical); font-weight: 600; }
+
+  /* ---------- sections ---------- */
+  section { margin-top: 64px; }
+  .plate {
+    display: flex; align-items: baseline; gap: 14px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 10px; margin-bottom: 22px;
+  }
+  .plate .tag {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em;
+    color: var(--accent); white-space: nowrap;
+  }
+  .plate h2 { font-size: 24px; font-weight: 800; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+  section > p, .prose p { max-width: 68ch; color: var(--ink-2); margin: 0 0 14px; text-wrap: pretty; }
+  section > p strong, .prose strong { color: var(--ink); }
+  .callout {
+    border-left: 3px solid var(--accent-mark);
+    background: var(--accent-wash);
+    padding: 14px 18px; border-radius: 0 4px 4px 0;
+    max-width: 68ch; margin: 20px 0 0;
+  }
+  .callout p { margin: 0; color: var(--ink); }
+  code.k {
+    font-family: var(--mono); font-size: 0.86em;
+    background: var(--card-2); border: 1px solid var(--line-soft);
+    padding: 1px 5px; border-radius: 3px; color: var(--ink);
+  }
+
+  /* ---------- process strip ---------- */
+  .flow { display: flex; flex-wrap: wrap; gap: 6px; align-items: stretch; margin: 22px 0 8px; }
+  .flow .step {
+    flex: 1 1 130px; background: var(--card); border: 1px solid var(--line);
+    border-radius: 4px; padding: 12px 14px; min-width: 128px; position: relative;
+  }
+  .flow .step .n { font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: 0.1em; }
+  .flow .step .t { font-weight: 700; font-size: 14.5px; margin: 3px 0 2px; }
+  .flow .step .d { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+  .flow .arrow { align-self: center; color: var(--muted); font-family: var(--mono); font-size: 14px; }
+
+  .fsm { margin-top: 22px; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 16px 18px; }
+  .fsm .label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+  .fsm .chain { font-family: var(--mono); font-size: 13px; line-height: 2.1; color: var(--ink-2); overflow-x: auto; }
+  .st {
+    display: inline-block; border: 1px solid var(--line); background: var(--card-2);
+    border-radius: 3px; padding: 2px 9px; color: var(--ink); font-weight: 500; white-space: nowrap;
+  }
+  .st.hot { border-color: var(--accent-mark); background: var(--accent-wash); color: var(--accent); }
+  .st.bad { border-color: var(--critical); background: var(--critical-wash); color: var(--critical); }
+  .st.good { color: var(--ok); border-color: var(--ok); }
+
+  /* ---------- hexagon ---------- */
+  .hexwrap { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px 6px 4px; overflow-x: auto; }
+  .hexwrap svg { display: block; min-width: 700px; width: 100%; height: auto; }
+  .hexnote { display: flex; flex-wrap: wrap; gap: 18px; font-family: var(--mono); font-size: 11.5px; color: var(--muted); padding: 8px 12px 10px; }
+  .hexnote span::before { content: "■ "; }
+  .hexnote .n1::before { color: var(--accent-mark); }
+  .hexnote .n2::before { color: var(--muted); }
+
+  .cols2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-top: 18px; }
+  .mini { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 16px 18px; }
+  .mini h3 { font-size: 13px; font-family: var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin: 0 0 10px; font-weight: 600; }
+  .mini ul { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 14px; }
+  .mini li { margin-bottom: 6px; }
+  .mini li strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- tables ---------- */
+  .tblwrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 5px; background: var(--card); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 640px; }
+  thead th {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); text-align: left; font-weight: 600;
+    padding: 12px 16px; border-bottom: 1px solid var(--line);
+  }
+  tbody td { padding: 11px 16px; border-bottom: 1px solid var(--line-soft); color: var(--ink-2); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.mono, .mono { font-family: var(--mono); font-size: 13px; }
+  td .role { color: var(--ink); font-weight: 600; }
+  td.num { font-variant-numeric: tabular-nums; text-align: right; }
+  .prio { font-family: var(--mono); font-size: 12px; border-radius: 3px; padding: 1px 7px; background: var(--card-2); border: 1px solid var(--line); color: var(--ink); white-space: nowrap; }
+
+  /* ---------- db cards ---------- */
+  .dbgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
+  .dbcard { background: var(--card); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .dbcard .head {
+    font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ink);
+    padding: 10px 14px; background: var(--card-2); border-bottom: 1px solid var(--line);
+  }
+  .dbcard .fields { padding: 10px 14px; font-family: var(--mono); font-size: 12px; color: var(--ink-2); line-height: 1.9; }
+  .dbcard .pk { color: var(--accent); }
+  .dbcard .fk { color: var(--s-informe); }
+
+  /* ---------- rubric chart ---------- */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 14px 16px; border-top: 3px solid var(--line); }
+  .stat.g1 { border-top-color: var(--s-informe); }
+  .stat.g2 { border-top-color: var(--s-diseno); }
+  .stat.g3 { border-top-color: var(--s-software); }
+  .stat.g4 { border-top-color: var(--s-iot); }
+  .stat .v { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+  .stat .v small { font-size: 14px; font-weight: 500; color: var(--muted); }
+  .stat .l { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); margin-top: 2px; }
+
+  .viz-root { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px 16px; }
+  .viz-title { font-weight: 700; font-size: 15px; margin: 0 0 2px; }
+  .viz-sub { font-size: 12.5px; color: var(--muted); margin: 0 0 16px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
+  .legend span { font-size: 12.5px; color: var(--ink-2); display: inline-flex; align-items: center; gap: 7px; }
+  .legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .rows { display: grid; gap: 5px; }
+  .brow {
+    display: grid; grid-template-columns: minmax(150px, 210px) 1fr 42px;
+    align-items: center; gap: 12px; padding: 2px 4px; border-radius: 3px; cursor: default;
+  }
+  .brow:hover { background: var(--card-2); }
+  .brow .bl { font-size: 13px; color: var(--ink-2); line-height: 1.3; overflow-wrap: break-word; }
+  .brow .track { height: 16px; position: relative; background: transparent; }
+  .brow .bar { height: 16px; border-radius: 0 4px 4px 0; min-width: 3px; }
+  .brow .bv { font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--ink); text-align: right; font-weight: 600; }
+  .g1 .bar { background: var(--s-informe); }
+  .g2 .bar { background: var(--s-diseno); }
+  .g3 .bar { background: var(--s-software); }
+  .g4 .bar { background: var(--s-iot); }
+
+  #tip {
+    position: fixed; z-index: 30; pointer-events: none; display: none;
+    max-width: 320px; background: var(--ink); color: var(--page);
+    font-size: 12.5px; line-height: 1.5; padding: 10px 13px; border-radius: 5px;
+    box-shadow: 0 6px 22px rgba(0,0,0,0.28);
+  }
+  #tip b { display: block; margin-bottom: 3px; }
+  #tip .pts { font-family: var(--mono); opacity: 0.75; }
+
+  details.tblview { margin-top: 16px; }
+  details.tblview summary {
+    cursor: pointer; font-family: var(--mono); font-size: 12.5px;
+    color: var(--accent); letter-spacing: 0.05em; padding: 4px 0; user-select: none;
+  }
+  details.tblview summary:focus-visible, .brow:focus-visible { outline: 2px solid var(--accent-mark); outline-offset: 2px; }
+  details.tblview .tblwrap { margin-top: 10px; }
+
+  /* ---------- roadmap ---------- */
+  .rail { display: grid; gap: 0; margin-top: 6px; }
+  .phase {
+    display: grid; grid-template-columns: 56px 1fr; gap: 0 18px;
+    position: relative; padding-bottom: 26px;
+  }
+  .phase::before {
+    content: ""; position: absolute; left: 27px; top: 42px; bottom: 0;
+    width: 2px; background: var(--line);
+  }
+  .phase:last-child::before { display: none; }
+  .phase .dot {
+    width: 42px; height: 42px; border-radius: 4px;
+    background: var(--card); border: 2px solid var(--accent-mark);
+    display: grid; place-items: center;
+    font-family: var(--mono); font-weight: 700; font-size: 15px; color: var(--accent);
+    margin-left: 7px; z-index: 1;
+  }
+  .phase .body { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 15px 18px; }
+  .phase h3 { margin: 0 0 6px; font-size: 16px; font-weight: 700; }
+  .phase h3 small { font-family: var(--mono); font-size: 11.5px; color: var(--muted); font-weight: 500; margin-left: 8px; }
+  .phase p { margin: 0 0 10px; font-size: 14px; color: var(--ink-2); max-width: 66ch; }
+  .ptags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ptags span {
+    font-family: var(--mono); font-size: 11px; color: var(--ink-2);
+    border: 1px solid var(--line-soft); background: var(--card-2);
+    border-radius: 3px; padding: 2px 8px; white-space: nowrap;
+  }
+  .ptags span b { color: var(--accent); font-weight: 600; }
+
+  /* ---------- stack ---------- */
+  .stackgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+  .stackcard { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 15px 17px; }
+  .stackcard .layer { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .stackcard .what { font-weight: 700; font-size: 15px; margin: 4px 0 5px; }
+  .stackcard .why { font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+
+  footer {
+    margin-top: 70px; padding-top: 18px; border-top: 1px solid var(--line);
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    display: flex; flex-wrap: wrap; gap: 8px 24px;
+  }
+
+  @media (max-width: 620px) {
+    .plate { flex-direction: column; gap: 4px; }
+    .brow { grid-template-columns: 1fr; gap: 3px; }
+    .brow .bv { text-align: left; }
+    .phase { grid-template-columns: 44px 1fr; }
+    .phase .dot { width: 34px; height: 34px; margin-left: 5px; }
+    .phase::before { left: 21px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .brow .bar { transition: opacity 120ms ease; }
+    .brow:hover .bar { opacity: 0.85; }
+  }
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Proyecto final · Sistemas Operativos · Período 2026–2027 · Ciclo I · Parcial 2</p>
+  <h1>Una línea de llenado, vista como un sistema de tiempo real</h1>
+  <p class="lede">El encargo: un <strong>programa de control y administración de producción</strong> para el llenado de fundas de productos secos (maní y pasas) sobre un <strong>RTOS</strong>. Traducido a tu idioma: un núcleo de dominio con máquina de estados, rodeado de adaptadores — sensor, actuador, base de datos, MQTT, HMI — ejecutados como tareas concurrentes de FreeRTOS.</p>
+  <div class="chips">
+    <span class="chip alert">ENTREGA: 6 JUL 2026 — T−1 DÍA</span>
+    <span class="chip">GRUPO <b>≤ 5</b> ESTUDIANTES</span>
+    <span class="chip">ENTREGABLE <b>PDF + WORD</b> · MOODLE</span>
+    <span class="chip">PONDERACIÓN <b>100 %</b> GESTIÓN PRÁCTICA 2P</span>
+  </div>
+</header>
+
+<!-- ============ 01 ============ -->
+<section>
+  <div class="plate">
+    <span class="tag">[ 01 · EL ENCARGO ]</span>
+    <h2>Qué piden, sin adornos</h2>
+  </div>
+  <p>Es el proyecto final de la materia Sistemas Operativos (Ing. Freddy Pincay). Hay que construir — y documentar en un informe — un sistema que controle una envasadora de productos secos con estos parámetros fijos:</p>
+  <p><strong>Productos:</strong> maní y pasas. <strong>Presentaciones:</strong> fundas de 25 g y 50 g. <strong>Lotes:</strong> pedidos de 50 o 100 unidades. <strong>Carga esperada:</strong> hasta 50 órdenes de producción por día.</p>
+  <p>El sistema debe cubrir cinco capacidades: supervisar el llenado en tiempo real, controlar el peso exacto (objetivo ± tolerancia), coordinar sensores y actuadores (báscula, válvula), generar reportes y trazabilidad por lote, y darle al operador una HMI para operar y ajustar parámetros. Además pide gestión administrativa clásica: productos, órdenes con estados (<code class="k">pendiente → en_proceso → completada</code>), inventario de materias primas y usuarios con roles (supervisor, gerente de producción).</p>
+  <div class="callout">
+    <p><strong>Lo que se entrega no es solo código:</strong> es un informe (PDF y Word) con requisitos, diagramas, modelo de datos, manuales técnico y de usuario, evidencia de emulación y bibliografía APA 7 — más el programa demostrable. Como verás en la rúbrica, el papel pesa más que el software.</p>
+  </div>
+</section>
+
+<!-- ============ 02 ============ -->
+<section>
+  <div class="plate">
+    <span class="tag">[ 02 · LA PLANTA ]</span>
+    <h2>El proceso físico que se modela</h2>
+  </div>
+  <p>Antes de la arquitectura, el dominio. Cada unidad producida pasa por este ciclo — es <strong>el</strong> invariante del sistema y la fuente de todos los requisitos de tiempo real:</p>
+
+  <div class="flow">
+    <div class="step"><span class="n">P-01</span><div class="t">Tolva</div><div class="d">Almacena el producto seco a granel (maní / pasas).</div></div>
+    <span class="arrow">→</span>
+    <div class="step"><span class="n">P-02</span><div class="t">Válvula dosificadora</div><div class="d">Actuador. Se abre/cierra bajo comando del controlador.</div></div>
+    <span class="arrow">→</span>
+    <div class="step"><span class="n">P-03</span><div class="t">Báscula</div><div class="d">Sensor. Reporta el peso de la funda en curso, en continuo.</div></div>
+    <span class="arrow">→</span>
+    <div class="step"><span class="n">P-04</span><div class="t">Validación</div><div class="d">¿Peso dentro de objetivo ± tolerancia? Decide aceptar o rechazar.</div></div>
+    <span class="arrow">→</span>
+    <div class="step"><span class="n">P-05</span><div class="t">Registro</div><div class="d">Cada llenado va al histórico: peso real, hora, lote, operador.</div></div>
+  </div>
+
+  <div class="fsm">
+    <div class="label">Máquina de estados del ciclo de llenado</div>
+    <div class="chain">
+      <span class="st">ESPERA</span> ─ orden activa → <span class="st hot">DOSIFICANDO</span> ─ peso ≥ objetivo → <span class="st">VALIDANDO</span> ─ dentro de tolerancia → <span class="st good">UNIDAD OK</span><br>
+      <span class="st">VALIDANDO</span> ─ fuera de tolerancia → <span class="st bad">RECHAZO</span> → registrar en lote (cantidad_rechazada) → <span class="st">ESPERA</span>
+    </div>
+  </div>
+
+  <p style="margin-top:18px;">La restricción de tiempo real vive en el lazo <strong>báscula → decisión → válvula</strong>: si la lectura o el cierre de válvula llegan tarde, la funda se pasa de peso. Ese lazo exige latencia acotada y determinismo — por eso el enunciado pide un RTOS y no un cron con buenas intenciones.</p>
+</section>
+
+<!-- ============ 03 ============ -->
+<section>
+  <div class="plate">
+    <span class="tag">[ 03 · ARQUITECTURA ]</span>
+    <h2>El mapa hexagonal</h2>
+  </div>
+  <p>El enunciado habla de HMI, PLC, sensores y SCADA, pero la estructura te va a resultar familiar: es un hexágono de libro. El dominio (órdenes, lotes, ciclo de llenado, validación de peso) no sabe nada de FreeRTOS, MySQL ni MQTT — todo eso son adaptadores detrás de puertos.</p>
+
+  <div class="hexwrap">
+    <svg viewBox="0 0 940 560" role="img" aria-label="Diagrama hexagonal: núcleo de dominio al centro, adaptadores conductores a la izquierda (HMI del operador, dashboard de reportes) y adaptadores conducidos a la derecha (báscula, válvula, base de datos, broker MQTT)">
+      <!-- connection lines: left -->
+      <line x1="236" y1="208" x2="330" y2="208" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="1 4" stroke-linecap="round"/>
+      <line x1="236" y1="352" x2="330" y2="352" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="1 4" stroke-linecap="round"/>
+      <!-- connection lines: right -->
+      <line x1="571" y1="180" x2="700" y2="172" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="1 4" stroke-linecap="round"/>
+      <line x1="598" y1="230" x2="700" y2="252" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="1 4" stroke-linecap="round"/>
+      <line x1="598" y1="330" x2="700" y2="332" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="1 4" stroke-linecap="round"/>
+      <line x1="571" y1="380" x2="700" y2="412" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="1 4" stroke-linecap="round"/>
+
+      <!-- hexagon -->
+      <polygon points="627,280 543.5,424.6 376.5,424.6 293,280 376.5,135.4 543.5,135.4"
+        fill="var(--accent-wash)" stroke="var(--accent-mark)" stroke-width="2"/>
+
+      <!-- core text -->
+      <text x="460" y="216" text-anchor="middle" font-family="var(--mono)" font-size="12" letter-spacing="2" fill="var(--accent)" font-weight="700">NÚCLEO DE DOMINIO</text>
+      <text x="460" y="248" text-anchor="middle" font-family="var(--sans)" font-size="14" fill="var(--ink)" font-weight="600">OrdenProduccion · Lote</text>
+      <text x="460" y="274" text-anchor="middle" font-family="var(--sans)" font-size="14" fill="var(--ink)" font-weight="600">CicloLlenado (máquina de estados)</text>
+      <text x="460" y="300" text-anchor="middle" font-family="var(--sans)" font-size="14" fill="var(--ink)" font-weight="600">Validación peso ± tolerancia</text>
+      <text x="460" y="326" text-anchor="middle" font-family="var(--sans)" font-size="14" fill="var(--ink)" font-weight="600">Inventario de materias primas</text>
+      <text x="460" y="360" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--muted)">cero dependencias de RTOS, BD o red</text>
+
+      <!-- ports (squares on the boundary) -->
+      <g>
+        <rect x="329" y="201" width="14" height="14" fill="var(--accent-mark)" transform="rotate(45 336 208)"/>
+        <rect x="329" y="345" width="14" height="14" fill="var(--accent-mark)" transform="rotate(45 336 352)"/>
+        <rect x="564" y="173" width="14" height="14" fill="var(--accent-mark)" transform="rotate(45 571 180)"/>
+        <rect x="591" y="223" width="14" height="14" fill="var(--accent-mark)" transform="rotate(45 598 230)"/>
+        <rect x="591" y="323" width="14" height="14" fill="var(--accent-mark)" transform="rotate(45 598 330)"/>
+        <rect x="564" y="373" width="14" height="14" fill="var(--accent-mark)" transform="rotate(45 571 380)"/>
+      </g>
+      <!-- port labels -->
+      <text x="352" y="196" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">op. de producción</text>
+      <text x="352" y="376" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">consultas</text>
+      <text x="500" y="168" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">peso</text>
+      <text x="540" y="252" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">comando</text>
+      <text x="540" y="318" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">persistencia</text>
+      <text x="500" y="400" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">telemetría</text>
+
+      <!-- left adapters (driving) -->
+      <text x="128" y="128" text-anchor="middle" font-family="var(--mono)" font-size="11" letter-spacing="2" fill="var(--muted)">CONDUCTORES</text>
+      <g>
+        <rect x="20" y="178" width="216" height="60" rx="4" fill="var(--card-2)" stroke="var(--line)"/>
+        <text x="128" y="203" text-anchor="middle" font-family="var(--sans)" font-size="13.5" font-weight="700" fill="var(--ink)">HMI del operador</text>
+        <text x="128" y="223" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--muted)">iniciar/parar · ajustar peso</text>
+      </g>
+      <g>
+        <rect x="20" y="322" width="216" height="60" rx="4" fill="var(--card-2)" stroke="var(--line)"/>
+        <text x="128" y="347" text-anchor="middle" font-family="var(--sans)" font-size="13.5" font-weight="700" fill="var(--ink)">Dashboard / reportes</text>
+        <text x="128" y="367" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--muted)">gerente · supervisor</text>
+      </g>
+
+      <!-- right adapters (driven) -->
+      <text x="808" y="128" text-anchor="middle" font-family="var(--mono)" font-size="11" letter-spacing="2" fill="var(--muted)">CONDUCIDOS</text>
+      <g>
+        <rect x="700" y="142" width="216" height="60" rx="4" fill="var(--card-2)" stroke="var(--line)"/>
+        <text x="808" y="167" text-anchor="middle" font-family="var(--sans)" font-size="13.5" font-weight="700" fill="var(--ink)">Báscula (celda de carga)</text>
+        <text x="808" y="187" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--muted)">HX711 · muestreo 50 ms</text>
+      </g>
+      <g>
+        <rect x="700" y="222" width="216" height="60" rx="4" fill="var(--card-2)" stroke="var(--line)"/>
+        <text x="808" y="247" text-anchor="middle" font-family="var(--sans)" font-size="13.5" font-weight="700" fill="var(--ink)">Válvula solenoide</text>
+        <text x="808" y="267" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--muted)">GPIO · abrir / cerrar</text>
+      </g>
+      <g>
+        <rect x="700" y="302" width="216" height="60" rx="4" fill="var(--card-2)" stroke="var(--line)"/>
+        <text x="808" y="327" text-anchor="middle" font-family="var(--sans)" font-size="13.5" font-weight="700" fill="var(--ink)">Repositorio — MySQL</text>
+        <text x="808" y="347" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--muted)">órdenes · lotes · histórico</text>
+      </g>
+      <g>
+        <rect x="700" y="382" width="216" height="60" rx="4" fill="var(--card-2)" stroke="var(--line)"/>
+        <text x="808" y="407" text-anchor="middle" font-family="var(--sans)" font-size="13.5" font-weight="700" fill="var(--ink)">Broker MQTT</text>
+        <text x="808" y="427" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--muted)">telemetría · Industria 4.0</text>
+      </g>
+    </svg>
+    <div class="hexnote">
+      <span class="n1">puerto (interfaz que define el dominio)</span>
+      <span class="n2">adaptador (implementación intercambiable)</span>
+    </div>
+  </div>
+
+  <div class="cols2">
+    <div class="mini">
+      <h3>Traducción del enunciado</h3>
+      <ul>
+        <li><strong>«HMI»</strong> → tu adaptador conductor: quien invoca casos de uso.</li>
+        <li><strong>«PLC / microcontrolador»</strong> → el runtime donde se despliega el núcleo.</li>
+        <li><strong>«Sensores y actuadores»</strong> → adaptadores conducidos de E/S física.</li>
+        <li><strong>«Emulación»</strong> → adaptadores fake / simulador: mismo puerto, hardware ficticio.</li>
+        <li><strong>«Integración IoT»</strong> → un adaptador de telemetría más; nada toca el dominio.</li>
+      </ul>
+    </div>
+    <div class="mini">
+      <h3>Por qué conviene el hexágono aquí</h3>
+      <ul>
+        <li><strong>No hay hardware real:</strong> la báscula será simulada. Con puertos, cambiar la báscula de Wokwi por una real es swap de adaptador, no rediseño.</li>
+        <li><strong>La rúbrica premia capas:</strong> «arquitectura multicapa justificada con diagramas» es literalmente la banda máxima del criterio.</li>
+        <li><strong>Testeable sin plazos:</strong> el dominio se prueba con unit tests puros; el determinismo se valida aparte, en el runtime.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 ============ -->
+<section>
+  <div class="plate">
+    <span class="tag">[ 04 · RTOS ]</span>
+    <h2>El RTOS no es una capa: es el runtime</h2>
+  </div>
+  <p>Aquí está el puente conceptual que hace clic si vienes de hexagonal: <strong>FreeRTOS no aparece en el diagrama de arquitectura como una capa — es el motor de ejecución</strong> que corre cada adaptador y el servicio de aplicación como tareas concurrentes con prioridades. Las colas y mutexes del RTOS son el mecanismo de transporte entre puerto y adaptador: mensajería, no acoplamiento.</p>
+  <p>Un reparto de tareas razonable (y defendible ante la rúbrica de «multitarea real con sincronización y determinismo»):</p>
+
+  <div class="tblwrap">
+    <table>
+      <thead>
+        <tr><th>Tarea FreeRTOS</th><th>Rol en el hexágono</th><th>Prioridad</th><th>Disparo</th><th>Sincronización</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">tsk_control</td><td><span class="role">Servicio de aplicación + dominio</span> — ejecuta la máquina de estados</td><td><span class="prio">5 · máx</span></td><td>evento: llega peso</td><td class="mono">xQueueReceive(colaPeso)</td></tr>
+        <tr><td class="mono">tsk_bascula</td><td><span class="role">Adaptador conducido</span> — sensor de peso</td><td><span class="prio">4</span></td><td>periódica · 50 ms</td><td class="mono">xQueueSend(colaPeso)</td></tr>
+        <tr><td class="mono">tsk_valvula</td><td><span class="role">Adaptador conducido</span> — actuador</td><td><span class="prio">4</span></td><td>evento: comando</td><td class="mono">xQueueReceive(colaValvula)</td></tr>
+        <tr><td class="mono">tsk_alarmas</td><td><span class="role">Dominio</span> — vigila tolerancia y fallos</td><td><span class="prio">3</span></td><td>evento</td><td class="mono">xEventGroupWaitBits(...)</td></tr>
+        <tr><td class="mono">tsk_mqtt</td><td><span class="role">Adaptador conducido</span> — telemetría</td><td><span class="prio">2</span></td><td>periódica · 500 ms</td><td class="mono">cola de telemetría</td></tr>
+        <tr><td class="mono">tsk_hmi</td><td><span class="role">Adaptador conductor</span> — pantalla del operador</td><td><span class="prio">1 · mín</span></td><td>periódica · 200 ms</td><td class="mono">xSemaphoreTake(mtxEstado)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p><strong>La inversión curiosa:</strong> en hexagonal la HMI «manda» (conduce los casos de uso), pero en el firmware corre con la prioridad más baja — el humano es lento y tolerante a latencia. El determinismo pertenece al lazo <code class="k">tsk_bascula → tsk_control → tsk_valvula</code>. Prioridad de scheduling y jerarquía arquitectónica son ejes ortogonales: explicar eso en el informe vale oro.</p>
+  </div>
+</section>
+
+<!-- ============ 05 ============ -->
+<section>
+  <div class="plate">
+    <span class="tag">[ 05 · DATOS ]</span>
+    <h2>Modelo de datos — las 6 tablas que exige el documento</h2>
+  </div>
+  <p>El enunciado ya fija las entidades; solo hay que normalizarlas y dibujar el ER. Del lado hexagonal, todas viven detrás del puerto de persistencia.</p>
+  <div class="dbgrid">
+    <div class="dbcard"><div class="head">Productos</div><div class="fields"><span class="pk">id PK</span> · nombre · presentacion_gr {25, 50}</div></div>
+    <div class="dbcard"><div class="head">OrdenesProduccion</div><div class="fields"><span class="pk">id PK</span> · fecha · <span class="fk">producto_id FK</span> · tamano_lote {50, 100} · cantidad_solicitada · estado {pendiente, en_proceso, completada}</div></div>
+    <div class="dbcard"><div class="head">Lotes</div><div class="fields"><span class="pk">id PK</span> · numero_lote · <span class="fk">orden_id FK</span> · fecha_produccion · fecha_caducidad · cantidad_producida · cantidad_rechazada</div></div>
+    <div class="dbcard"><div class="head">InventarioMateriasPrimas</div><div class="fields"><span class="pk">id PK</span> · materia_prima · cantidad_disponible · unidad_medida</div></div>
+    <div class="dbcard"><div class="head">HistoricoProduccion</div><div class="fields"><span class="pk">id PK</span> · <span class="fk">lote_id FK</span> · peso_real · fecha_hora · <span class="fk">operador_id FK</span> — un registro por funda llenada</div></div>
+    <div class="dbcard"><div class="head">Usuarios</div><div class="fields"><span class="pk">id PK</span> · nombre · rol {operador, supervisor, gerente} · hash_clave · permisos</div></div>
+  </div>
+</section>
+
+<!-- ============ 06 ============ -->
+<section>
+  <div class="plate">
+    <span class="tag">[ 06 · RÚBRICA ]</span>
+    <h2>Dónde están los puntos</h2>
+  </div>
+  <p>La rúbrica del Excel suma <strong>10.5 puntos</strong> en 15 criterios. Agrupados por tipo de trabajo, el mensaje es claro: <strong>6.5 puntos se ganan escribiendo el informe y los diseños; 4.0 escribiendo software</strong>. Prioriza en ese orden.</p>
+
+  <div class="stats">
+    <div class="stat g1"><div class="v">4.5 <small>pts</small></div><div class="l">Informe y gestión</div></div>
+    <div class="stat g2"><div class="v">2.0 <small>pts</small></div><div class="l">Diseño (BD · Arq · UI)</div></div>
+    <div class="stat g3"><div class="v">3.0 <small>pts</small></div><div class="l">Software RTOS</div></div>
+    <div class="stat g4"><div class="v">1.0 <small>pts</small></div><div class="l">Integración IoT</div></div>
+  </div>
+
+  <div class="viz-root">
+    <p class="viz-title">Peso de cada criterio de la rúbrica</p>
+    <p class="viz-sub">Puntaje máximo por criterio, ordenado de mayor a menor · pasa el cursor para ver qué exige la banda «Excede cumplimiento»</p>
+    <div class="legend">
+      <span><i style="background:var(--s-informe)"></i>Informe y gestión</span>
+      <span><i style="background:var(--s-diseno)"></i>Diseño</span>
+      <span><i style="background:var(--s-software)"></i>Software RTOS</span>
+      <span><i style="background:var(--s-iot)"></i>Integración IoT</span>
+    </div>
+    <div class="rows" id="chart">
+      <div class="brow g1" tabindex="0" data-x="Análisis completo con matriz de requisitos, diagramas y riesgos."><div class="bl">Levantamiento de requisitos y análisis</div><div class="track"><div class="bar" style="width:100%"></div></div><div class="bv">1.5</div></div>
+      <div class="brow g1" tabindex="0" data-x="Documento profesional completo, portada institucional, índice automático, sin errores."><div class="bl">Documentación formal</div><div class="track"><div class="bar" style="width:66.7%"></div></div><div class="bv">1.0</div></div>
+      <div class="brow g3" tabindex="0" data-x="Multitarea real con sincronización y determinismo."><div class="bl">Implementación RTOS (multitarea y control)</div><div class="track"><div class="bar" style="width:66.7%"></div></div><div class="bv">1.0</div></div>
+      <div class="brow g4" tabindex="0" data-x="Implementa MQTT / SCADA / nube o ERP funcional."><div class="bl">Integración IoT / Industria 4.0</div><div class="track"><div class="bar" style="width:66.7%"></div></div><div class="bv">1.0</div></div>
+      <div class="brow g2" tabindex="0" data-x="Modelo ER completo, normalizado, con claves y restricciones."><div class="bl">Diseño de base de datos</div><div class="track"><div class="bar" style="width:53.3%"></div></div><div class="bv">0.8</div></div>
+      <div class="brow g2" tabindex="0" data-x="Arquitectura multicapa justificada con diagramas y RTOS definido."><div class="bl">Arquitectura de software</div><div class="track"><div class="bar" style="width:40%"></div></div><div class="bv">0.6</div></div>
+      <div class="brow g2" tabindex="0" data-x="Prototipos detallados, interfaz industrial funcional."><div class="bl">Diseño UI/UX y HMI</div><div class="track"><div class="bar" style="width:40%"></div></div><div class="bv">0.6</div></div>
+      <div class="brow g3" tabindex="0" data-x="Automatización completa con validaciones y alarmas."><div class="bl">Control de producción</div><div class="track"><div class="bar" style="width:33.3%"></div></div><div class="bv">0.5</div></div>
+      <div class="brow g3" tabindex="0" data-x="Actualización en tiempo real sin latencia perceptible."><div class="bl">Monitoreo en tiempo real</div><div class="track"><div class="bar" style="width:33.3%"></div></div><div class="bv">0.5</div></div>
+      <div class="brow g3" tabindex="0" data-x="Reportes dinámicos exportables con gráficos."><div class="bl">Reportes y estadísticas</div><div class="track"><div class="bar" style="width:33.3%"></div></div><div class="bv">0.5</div></div>
+      <div class="brow g3" tabindex="0" data-x="Simulación completa con pruebas de estrés y errores."><div class="bl">Emulación y pruebas</div><div class="track"><div class="bar" style="width:33.3%"></div></div><div class="bv">0.5</div></div>
+      <div class="brow g1" tabindex="0" data-x="Plan preventivo, correctivo y evolutivo documentado."><div class="bl">Mantenimiento y mejora continua</div><div class="track"><div class="bar" style="width:33.3%"></div></div><div class="bv">0.5</div></div>
+      <div class="brow g1" tabindex="0" data-x="Roles definidos, cronograma y control de versiones."><div class="bl">Trabajo en equipo y organización</div><div class="track"><div class="bar" style="width:33.3%"></div></div><div class="bv">0.5</div></div>
+      <div class="brow g1" tabindex="0" data-x="Referencias técnicas actualizadas en formato APA 7."><div class="bl">Fuentes y referencias (APA 7)</div><div class="track"><div class="bar" style="width:33.3%"></div></div><div class="bv">0.5</div></div>
+      <div class="brow g1" tabindex="0" data-x="Cumple todos los requisitos y agrega mejoras técnicas."><div class="bl">Cumplimiento total del proyecto</div><div class="track"><div class="bar" style="width:33.3%"></div></div><div class="bv">0.5</div></div>
+    </div>
+
+    <details class="tblview">
+      <summary>ver como tabla — criterio · puntos · banda «Excede cumplimiento»</summary>
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>Criterio</th><th>Grupo</th><th style="text-align:right">Pts</th><th>Para «Excede cumplimiento»</th></tr></thead>
+          <tbody>
+            <tr><td>Levantamiento de requisitos y análisis</td><td>Informe</td><td class="num mono">1.5</td><td>Matriz de requisitos, diagramas y riesgos</td></tr>
+            <tr><td>Documentación formal</td><td>Informe</td><td class="num mono">1.0</td><td>Portada institucional, índice automático, sin errores</td></tr>
+            <tr><td>Implementación RTOS</td><td>Software</td><td class="num mono">1.0</td><td>Multitarea real con sincronización y determinismo</td></tr>
+            <tr><td>Integración IoT / Industria 4.0</td><td>IoT</td><td class="num mono">1.0</td><td>MQTT / SCADA / nube o ERP funcional</td></tr>
+            <tr><td>Diseño de base de datos</td><td>Diseño</td><td class="num mono">0.8</td><td>Modelo ER normalizado, claves y restricciones</td></tr>
+            <tr><td>Arquitectura de software</td><td>Diseño</td><td class="num mono">0.6</td><td>Multicapa justificada con diagramas, RTOS definido</td></tr>
+            <tr><td>Diseño UI/UX y HMI</td><td>Diseño</td><td class="num mono">0.6</td><td>Prototipos detallados, interfaz industrial funcional</td></tr>
+            <tr><td>Control de producción</td><td>Software</td><td class="num mono">0.5</td><td>Automatización completa, validaciones y alarmas</td></tr>
+            <tr><td>Monitoreo en tiempo real</td><td>Software</td><td class="num mono">0.5</td><td>Actualización sin latencia perceptible</td></tr>
+            <tr><td>Reportes y estadísticas</td><td>Software</td><td class="num mono">0.5</td><td>Reportes dinámicos exportables con gráficos</td></tr>
+            <tr><td>Emulación y pruebas</td><td>Software</td><td class="num mono">0.5</td><td>Simulación completa, pruebas de estrés y errores</td></tr>
+            <tr><td>Mantenimiento y mejora continua</td><td>Informe</td><td class="num mono">0.5</td><td>Plan preventivo, correctivo y evolutivo</td></tr>
+            <tr><td>Trabajo en equipo y organización</td><td>Informe</td><td class="num mono">0.5</td><td>Roles, cronograma y control de versiones</td></tr>
+            <tr><td>Fuentes y referencias (APA 7)</td><td>Informe</td><td class="num mono">0.5</td><td>Referencias técnicas actualizadas en APA 7</td></tr>
+            <tr><td>Cumplimiento total del proyecto</td><td>Informe</td><td class="num mono">0.5</td><td>Todo lo pedido + mejoras técnicas</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- ============ 07 ============ -->
+<section>
+  <div class="plate">
+    <span class="tag">[ 07 · ROADMAP ]</span>
+    <h2>Sprint de entrega — cinco fases</h2>
+  </div>
+  <p>Con entrega mañana, el orden optimiza puntos por hora: el documento arranca primero porque vale más, y el código se construye de adentro (dominio) hacia afuera (adaptadores), como manda el hexágono.</p>
+
+  <div class="rail">
+    <div class="phase">
+      <div class="dot">F1</div>
+      <div class="body">
+        <h3>Documento base <small>en paralelo con F2</small></h3>
+        <p>Portada, índice automático, levantamiento de requisitos con matriz funcional/no funcional, diagramas (casos de uso, flujo del proceso), análisis de riesgos y modelo ER normalizado con claves.</p>
+        <div class="ptags"><span>Requisitos <b>1.5</b></span><span>Doc. formal <b>1.0</b></span><span>BD <b>0.8</b></span><span>Arquitectura <b>0.6</b></span></div>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="dot">F2</div>
+      <div class="body">
+        <h3>Núcleo RTOS <small>dominio primero, adaptadores después</small></h3>
+        <p>Proyecto FreeRTOS con las 6 tareas de la sección 04: máquina de estados de llenado, validación ± tolerancia, colas y mutex. El dominio como módulos C puros, sin includes de FreeRTOS.</p>
+        <div class="ptags"><span>RTOS <b>1.0</b></span><span>Control <b>0.5</b></span><span>Monitoreo <b>0.5</b></span></div>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="dot">F3</div>
+      <div class="body">
+        <h3>Backend, BD y reportes</h3>
+        <p>Script SQL de las 6 tablas, lógica de órdenes (pendiente → en_proceso → completada), descuento de inventario por lote y reportes: lotes/día, % de error, historial por operador.</p>
+        <div class="ptags"><span>Reportes <b>0.5</b></span><span>refuerza BD <b>0.8</b></span></div>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="dot">F4</div>
+      <div class="body">
+        <h3>Integración y evidencia</h3>
+        <p>Telemetría MQTT hacia el dashboard, corrida completa de una orden (lote de 50 × 25 g) en el emulador, prueba de estrés de 50 órdenes/día y capturas de pantalla de todo para el informe.</p>
+        <div class="ptags"><span>IoT <b>1.0</b></span><span>Emulación <b>0.5</b></span><span>UI/HMI <b>0.6</b></span></div>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="dot">F5</div>
+      <div class="body">
+        <h3>Cierre del documento y entrega</h3>
+        <p>Manual técnico y de usuario, plan de mantenimiento (preventivo/correctivo/evolutivo), roles del equipo con cronograma, referencias APA 7, exportar a PDF + Word y subir a Moodle.</p>
+        <div class="ptags"><span>Mantenimiento <b>0.5</b></span><span>Equipo <b>0.5</b></span><span>APA <b>0.5</b></span><span>Cumplimiento <b>0.5</b></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 08 ============ -->
+<section>
+  <div class="plate">
+    <span class="tag">[ 08 · STACK ]</span>
+    <h2>Stack recomendado</h2>
+  </div>
+  <p>Elegido para maximizar lo demostrable en un día, sin hardware físico:</p>
+  <div class="stackgrid">
+    <div class="stackcard"><div class="layer">Runtime · control</div><div class="what">FreeRTOS en ESP32 (Wokwi)</div><div class="why">Simulador en el navegador con báscula y GPIO ficticios: cubre «emulación» y «multitarea real» con evidencia visual. Alternativa: puerto POSIX de FreeRTOS en Linux.</div></div>
+    <div class="stackcard"><div class="layer">Telemetría · IoT</div><div class="what">MQTT — Mosquitto</div><div class="why">Broker local o público. Un tópico por señal (peso, estado, alarmas) convierte el punto de IoT en algo funcional, no conceptual.</div></div>
+    <div class="stackcard"><div class="layer">Persistencia</div><div class="what">MySQL (o SQLite)</div><div class="why">Las 6 tablas del enunciado detrás del puerto de repositorio. MySQL figura entre los DBMS sugeridos por el profesor.</div></div>
+    <div class="stackcard"><div class="layer">HMI · reportes</div><div class="what">Dashboard web en Python</div><div class="why">Suscrito al broker: peso en vivo, estado de máquina, órdenes y reportes exportables con gráficos — la banda máxima de tres criterios a la vez.</div></div>
+  </div>
+</section>
+
+<footer>
+  <span>FUENTES: Proyecto_Final_SOTR_2026_CI.docx · Rubrica_Proyecto_RTOS.xlsx</span>
+  <span>BRIEF GENERADO: 2026-07-05</span>
+</footer>
+
+</div>
+
+<div id="tip" role="tooltip"></div>
+
+<script>
+  (function () {
+    var tip = document.getElementById('tip');
+    var rows = document.querySelectorAll('.brow[data-x]');
+    function show(row, x, y) {
+      var pts = row.querySelector('.bv').textContent;
+      var name = row.querySelector('.bl').textContent;
+      tip.innerHTML = '<b>' + name + ' <span class="pts">· ' + pts + ' pts</span></b>Para «Excede»: ' + row.getAttribute('data-x');
+      tip.style.display = 'block';
+      var w = tip.offsetWidth, h = tip.offsetHeight;
+      var left = Math.min(x + 14, window.innerWidth - w - 10);
+      var top = y - h - 12 < 8 ? y + 18 : y - h - 12;
+      tip.style.left = left + 'px';
+      tip.style.top = top + 'px';
+    }
+    rows.forEach(function (row) {
+      row.addEventListener('mousemove', function (e) { show(row, e.clientX, e.clientY); });
+      row.addEventListener('mouseleave', function () { tip.style.display = 'none'; });
+      row.addEventListener('focus', function () {
+        var r = row.getBoundingClientRect();
+        show(row, r.left + r.width / 2, r.top);
+      });
+      row.addEventListener('blur', function () { tip.style.display = 'none'; });
+    });
+  })();
+</script>
+</body>
+</html>

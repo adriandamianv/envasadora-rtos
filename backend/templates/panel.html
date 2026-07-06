@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block titulo %}Panel en vivo · Envasadora ENV01{% endblock %}
+{% block contenido %}
+<h1>Panel en vivo</h1>
+
+<div class="rejilla">
+  <!-- Peso en vivo -->
+  <section class="tarjeta">
+    <h2>Peso en vivo</h2>
+    <div class="medidor">
+      <span id="peso-vivo">--.-</span><small> g</small>
+    </div>
+    <p class="silencioso">Última muestra: <span id="peso-ts">-</span></p>
+  </section>
+
+  <!-- Estado de la máquina (FSM) -->
+  <section class="tarjeta">
+    <h2>Estado de la máquina</h2>
+    <div class="fsm" id="fsm-estado">DESCONOCIDO</div>
+    <p>Lote: <strong id="fsm-lote">{{ orden.lotes[-1].numero_lote if orden and orden.lotes else '-' }}</strong>
+       · Unidad: <strong id="fsm-unidad">-</strong></p>
+    <div id="alarma" class="alarma oculto"></div>
+  </section>
+
+  <!-- Contadores del lote -->
+  <section class="tarjeta">
+    <h2>Contadores del lote</h2>
+    <div class="contadores">
+      <div><span id="cont-ok" class="ok">{{ orden.lotes[-1].cantidad_producida if orden and orden.lotes else 0 }}</span><label>aceptadas</label></div>
+      <div><span id="cont-rechazo" class="mal">{{ orden.lotes[-1].cantidad_rechazada if orden and orden.lotes else 0 }}</span><label>rechazadas</label></div>
+      <div><span id="cont-objetivo">{{ orden.tam_lote if orden else '-' }}</span><label>objetivo</label></div>
+    </div>
+    <p class="silencioso">
+      Orden activa:
+      {% if orden %}
+        #{{ orden.id }} · {{ orden.producto.nombre }} {{ orden.producto.presentacion_gr }} g
+      {% else %}
+        ninguna
+      {% endif %}
+    </p>
+  </section>
+
+  <!-- Inventario -->
+  <section class="tarjeta">
+    <h2>Inventario</h2>
+    <table>
+      <thead><tr><th>Materia prima</th><th>Disponible</th></tr></thead>
+      <tbody>
+        {% for item in inventario %}
+        <tr><td>{{ item.materia_prima }}</td>
+            <td>{{ '%.2f'|format(item.cantidad_disponible) }} {{ item.unidad_medida }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+
+<!-- Últimas unidades -->
+<section class="tarjeta">
+  <h2>Últimas unidades envasadas</h2>
+  <table>
+    <thead><tr><th>Fecha/hora</th><th>Lote</th><th>Peso (g)</th><th>Resultado</th></tr></thead>
+    <tbody id="tabla-unidades">
+      {% for u in unidades %}
+      <tr>
+        <td>{{ u.fecha_hora.strftime('%d/%m %H:%M:%S') }}</td>
+        <td>{{ u.lote.numero_lote }}</td>
+        <td>{{ '%.1f'|format(u.peso_real) }}</td>
+        <td class="{{ 'ok' if u.ok else 'mal' }}">{{ 'ACEPTADA' if u.ok else 'RECHAZADA' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+  // Cliente Socket.IO: el backend reemite lo que llega por MQTT.
+  const socket = io();
+
+  socket.on('peso', (d) => {
+    document.getElementById('peso-vivo').textContent = Number(d.g).toFixed(1);
+    document.getElementById('peso-ts').textContent = d.ts ?? '-';
+  });
+
+  socket.on('estado', (d) => {
+    const fsm = document.getElementById('fsm-estado');
+    fsm.textContent = d.fsm ?? 'DESCONOCIDO';
+    fsm.dataset.fsm = d.fsm ?? '';
+    if (d.unidad !== undefined) document.getElementById('fsm-unidad').textContent = d.unidad;
+    if (d.lote) document.getElementById('fsm-lote').textContent = d.lote;
+  });
+
+  socket.on('unidad', (d) => {
+    document.getElementById('cont-ok').textContent = d.producidas;
+    document.getElementById('cont-rechazo').textContent = d.rechazadas;
+    document.getElementById('cont-objetivo').textContent = d.objetivo;
+    // Insertar la unidad al inicio de la tabla
+    const fila = document.createElement('tr');
+    const ahora = new Date().toLocaleTimeString('es-EC');
+    fila.innerHTML = `<td>${ahora}</td><td>${d.lote}</td>` +
+      `<td>${Number(d.peso).toFixed(1)}</td>` +
+      `<td class="${d.ok ? 'ok' : 'mal'}">${d.ok ? 'ACEPTADA' : 'RECHAZADA'}</td>`;
+    const tabla = document.getElementById('tabla-unidades');
+    tabla.prepend(fila);
+    while (tabla.rows.length > 10) tabla.deleteRow(-1);
+  });
+
+  socket.on('lote_completado', (d) => {
+    mostrarAlarma(`Lote ${d.lote} COMPLETADO`, 'ok');
+  });
+
+  socket.on('alarma', (d) => {
+    mostrarAlarma(`ALARMA ${d.tipo ?? ''} — peso ${d.peso ?? '?'} g`, 'mal');
+  });
+
+  function mostrarAlarma(texto, tipo) {
+    const caja = document.getElementById('alarma');
+    caja.textContent = texto;
+    caja.className = 'alarma ' + tipo;
+    setTimeout(() => caja.classList.add('oculto'), 6000);
+    caja.classList.remove('oculto');
+  }
+</script>
+{% endblock %}

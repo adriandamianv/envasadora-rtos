@@ -1,0 +1,12 @@
+PRUEBA END-TO-END EN VIVO — 2026-07-05 23:4x
+Flujo: web (crear+iniciar orden) → cmd MQTT (broker.hivemq.com) → ESP32 emulado
+en Wokwi (FreeRTOS produce unidades) → telemetría MQTT → backend Flask → BD.
+
+login: 302 (ok)  ·  crear orden: 302 (ok)  ·  iniciar orden: 302 (ok, publicó cmd)
+Tras 90 s de producción (sim ~3x más lenta que tiempo real):
+
+historico (total, ok, peso_prom): (13, 13, 25.14)
+lotes:      [('L-0001', 13, 0)]
+ordenes:    [(1, 'en_proceso')]      ← 13/50 unidades al detener la prueba
+inventario: mani 50.0 → 49.675 kg   (13 × 25 g = 0.325 kg exacto ✔)
+            fundas 5000 → 4987      (13 unidades ✔)

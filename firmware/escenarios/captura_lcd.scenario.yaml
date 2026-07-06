@@ -1,0 +1,22 @@
+# Captura el framebuffer del LCD (HMI física) durante la producción.
+#   wokwi-cli . --scenario escenarios/captura_lcd.scenario.yaml --timeout 60000
+name: captura-lcd
+version: 1
+steps:
+  - wait-serial: "[BOOT] envasadora lista"
+  - delay: 2000ms
+  - set-control:
+      part-id: btn_ini
+      control: pressed
+      value: 1
+  - delay: 150ms
+  - set-control:
+      part-id: btn_ini
+      control: pressed
+      value: 0
+  - wait-serial: "[UNIDAD] n=2"
+  - delay: 1200ms
+  - take-screenshot:
+      part-id: lcd1
+      save-to: lcd_produccion.png
+  - wait-serial: "[UNIDAD] n=3"
