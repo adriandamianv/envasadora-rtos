@@ -36,9 +36,17 @@ def crear_orden(producto_id: int, tam_lote: int, cantidad_solicitada: int,
 
 
 def iniciar_orden(orden_id: int) -> Lote | None:
-    """Pasa la orden a 'en_proceso' y abre un lote nuevo. None si no procede."""
+    """Pasa la orden a 'en_proceso' y abre un lote nuevo. None si no procede.
+
+    Si la orden ya está en proceso devuelve su último lote, para poder
+    reenviar el comando a la máquina (p. ej. si el cmd MQTT se perdió por
+    un arranque en frío del servidor o un reinicio del dispositivo)."""
     orden = db.session.get(OrdenProduccion, orden_id)
-    if orden is None or not reglas.transicion_valida(orden.estado, "en_proceso"):
+    if orden is None:
+        return None
+    if orden.estado == "en_proceso" and orden.lotes:
+        return orden.lotes[-1]
+    if not reglas.transicion_valida(orden.estado, "en_proceso"):
         return None
     orden.estado = "en_proceso"
     secuencia = (db.session.query(func.max(Lote.id)).scalar() or 0) + 1
