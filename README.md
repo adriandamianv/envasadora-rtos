@@ -4,6 +4,10 @@ Control y administración de producción de llenado de fundas de maní y pasas
 (25 g / 50 g, lotes de 50 / 100) sobre **FreeRTOS/ESP32** emulado en **Wokwi**,
 con telemetría **MQTT**, backend **Flask + PostgreSQL** y despliegue en **Render**.
 
+**Demo en producción:** https://envasadora-rtos.onrender.com (gerente/1234 · el plan
+gratuito duerme tras 15 min sin visitas: el primer acceso tarda ~1 minuto).
+**Simulación:** carpeta `wokwi-web/` lista para pegar en wokwi.com (ver COMO_SUBIR.md).
+
 ## Estructura (plana, hexagonal)
 
 ```
