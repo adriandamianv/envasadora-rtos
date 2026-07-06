@@ -30,15 +30,23 @@ def inicio():
 
 @bp.route("/salud")
 def salud():
-    """Diagnóstico: estado del backend y su conexión MQTT (sin login)."""
+    """Diagnóstico: estado del backend, conexión MQTT y publish de prueba."""
+    import threading
     from flask import current_app
     from extensions import mqtt
+
+    try:
+        res = mqtt.publish(f"{current_app.config['TOPIC_BASE']}/diag", '{"ping":1}', qos=1)
+        rc_publish = res[0] if isinstance(res, tuple) else getattr(res, "rc", None)
+    except Exception as exc:
+        rc_publish = f"excepcion: {exc}"
     return {
         "estado": "ok",
         "mqtt_conectado": bool(getattr(mqtt, "connected", False)),
         "broker": current_app.config.get("MQTT_BROKER_URL"),
         "puerto": current_app.config.get("MQTT_BROKER_PORT"),
-        "transporte": current_app.config.get("MQTT_TRANSPORT", "tcp"),
+        "rc_publish_diag": rc_publish,
+        "hilos": [t.name for t in threading.enumerate()],
     }
 
 
