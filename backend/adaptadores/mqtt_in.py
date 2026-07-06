@@ -1,58 +1,107 @@
-"""Adaptador de entrada MQTT.
+"""Adaptador MQTT (entrada y salida) con paho puro.
 
-Se suscribe a envasadora/ENV01/# y despacha cada tópico a su handler.
-Los callbacks de Flask-MQTT corren en el hilo de paho, FUERA del
-contexto de la aplicación, por eso guardamos una referencia global a
-la app y usamos `with _app.app_context():` cuando tocamos la base.
+Antes usábamos Flask-MQTT, pero bajo gunicorn su hilo de red moría en
+silencio dejando `connected=True` obsoleto: los publish devolvían rc=0
+y se encolaban hacia la nada. Este adaptador maneja el ciclo de vida a
+mano: un hilo propio con loop_forever y reintento eterno, y publish
+con confirmación real del broker (wait_for_publish, QoS 1).
+
+Los callbacks corren en el hilo de paho, FUERA del contexto de la
+aplicación, por eso guardamos la app y usamos `with _app.app_context()`.
 """
 import json
+import threading
+import time
 
-from extensions import mqtt, socketio
+import paho.mqtt.client as paho
 
-_app = None  # referencia global a la app (patrón init_mqtt(app))
+from extensions import socketio
+
+_app = None
+_cliente: paho.Client | None = None
 
 
 def init_mqtt(app):
-    """Registra los callbacks y arranca la conexión MQTT."""
-    global _app
+    """Crea el cliente y arranca el hilo de red (no bloquea el arranque)."""
+    global _app, _cliente
     _app = app
+    _cliente = paho.Client(client_id=app.config["MQTT_CLIENT_ID"], clean_session=True)
+    _cliente.on_connect = _al_conectar
+    _cliente.on_message = _al_mensaje
+    threading.Thread(target=_bucle_red, name="mqtt-bucle", daemon=True).start()
 
-    @mqtt.on_connect()
-    def al_conectar(client, userdata, flags, rc):
-        base = _app.config["TOPIC_BASE"]
-        mqtt.subscribe(f"{base}/#")
-        _app.logger.info("MQTT conectado (rc=%s), suscrito a %s/#", rc, base)
 
-    @mqtt.on_message()
-    def al_mensaje(client, userdata, message):
-        # OJO: una excepción aquí muere silenciosa en el hilo de paho,
-        # por eso todo el despacho va dentro de try/except con log.
-        subtopico = message.topic.rsplit("/", 1)[-1]
-        _app.logger.debug("MQTT %s: %s", message.topic, message.payload[:120])
+def _bucle_red():
+    """Conecta y atiende la red. Si el broker echa la conexión, el DNS
+    falla o hay cualquier excepción, espera 5 s y vuelve a intentar:
+    este hilo no muere nunca (y aparece como 'mqtt-bucle' en /salud)."""
+    while True:
         try:
-            datos = json.loads(message.payload.decode())
-        except (ValueError, UnicodeDecodeError):
-            _app.logger.warning("Payload MQTT inválido en %s", message.topic)
-            return
-        try:
-            if subtopico == "peso":
-                _manejar_peso(datos)
-            elif subtopico == "estado":
-                _manejar_estado(datos)
-            elif subtopico == "unidad":
-                _manejar_unidad(datos)
-            elif subtopico == "alarma":
-                _manejar_alarma(datos)
-            # el tópico 'cmd' lo publica el propio backend: se ignora aquí
-        except Exception:
-            _app.logger.exception("Error procesando %s", message.topic)
+            _cliente.connect(
+                _app.config["MQTT_BROKER_URL"],
+                _app.config["MQTT_BROKER_PORT"],
+                keepalive=60,
+            )
+            _cliente.loop_forever()   # reconexiones internas incluidas
+        except Exception as exc:
+            _app.logger.warning("MQTT sin conexión (%s); reintento en 5 s", exc)
+        time.sleep(5)
 
-    # La conexión es asíncrona (MQTT_CONNECT_ASYNC): si el broker no
-    # responde, paho reintenta en segundo plano y la app sigue viva.
+
+def conectado() -> bool:
+    return _cliente is not None and _cliente.is_connected()
+
+
+def publicar(subtopico: str, payload: dict, timeout: float = 5.0) -> bool:
+    """Publica con QoS 1 y espera la confirmación del broker.
+
+    Devuelve False si el cliente está desconectado o el broker no
+    confirma a tiempo — el llamador decide qué mostrarle al usuario."""
+    if _cliente is None:
+        return False
+    topico = f"{_app.config['TOPIC_BASE']}/{subtopico}"
+    info = _cliente.publish(topico, json.dumps(payload), qos=1)
+    if info.rc != paho.MQTT_ERR_SUCCESS:
+        _app.logger.warning("publish en %s falló de inmediato (rc=%s)", topico, info.rc)
+        return False
     try:
-        mqtt.init_app(app)
-    except Exception as exc:  # sin red, DNS caído, etc.
-        app.logger.warning("MQTT no disponible al arrancar: %s", exc)
+        info.wait_for_publish(timeout=timeout)
+    except Exception:
+        pass
+    if not info.is_published():
+        _app.logger.warning("publish en %s sin confirmación del broker", topico)
+        return False
+    _app.logger.info("cmd publicado en %s: %s", topico, payload)
+    return True
+
+
+def _al_conectar(client, userdata, flags, rc):
+    base = _app.config["TOPIC_BASE"]
+    client.subscribe(f"{base}/#", qos=1)
+    _app.logger.info("MQTT conectado (rc=%s), suscrito a %s/#", rc, base)
+
+
+def _al_mensaje(client, userdata, message):
+    # OJO: una excepción aquí muere silenciosa en el hilo de paho,
+    # por eso todo el despacho va dentro de try/except con log.
+    subtopico = message.topic.rsplit("/", 1)[-1]
+    try:
+        datos = json.loads(message.payload.decode())
+    except (ValueError, UnicodeDecodeError):
+        _app.logger.warning("Payload MQTT inválido en %s", message.topic)
+        return
+    try:
+        if subtopico == "peso":
+            _manejar_peso(datos)
+        elif subtopico == "estado":
+            _manejar_estado(datos)
+        elif subtopico == "unidad":
+            _manejar_unidad(datos)
+        elif subtopico == "alarma":
+            _manejar_alarma(datos)
+        # 'cmd' y 'diag' los publica el propio backend: se ignoran aquí
+    except Exception:
+        _app.logger.exception("Error procesando %s", message.topic)
 
 
 # --------------------------------------------------------------------------

@@ -3,7 +3,6 @@
 Se instancian sin app y se enlazan en create_app() para evitar
 importaciones circulares entre vistas, adaptadores y modelos.
 """
-from flask_mqtt import Mqtt
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
@@ -19,4 +18,3 @@ db = SQLAlchemy(model_class=Base)
 # los hilos de paho-mqtt (NO usar eventlet junto con Flask-MQTT).
 socketio = SocketIO(async_mode="threading", cors_allowed_origins="*")
 
-mqtt = Mqtt()

@@ -33,19 +33,14 @@ def salud():
     """Diagnóstico: estado del backend, conexión MQTT y publish de prueba."""
     import threading
     from flask import current_app
-    from extensions import mqtt
+    from adaptadores import mqtt_in
 
-    try:
-        res = mqtt.publish(f"{current_app.config['TOPIC_BASE']}/diag", '{"ping":1}', qos=1)
-        rc_publish = res[0] if isinstance(res, tuple) else getattr(res, "rc", None)
-    except Exception as exc:
-        rc_publish = f"excepcion: {exc}"
     return {
         "estado": "ok",
-        "mqtt_conectado": bool(getattr(mqtt, "connected", False)),
+        "mqtt_conectado": mqtt_in.conectado(),
+        "publish_diag_confirmado": mqtt_in.publicar("diag", {"ping": 1}, timeout=3),
         "broker": current_app.config.get("MQTT_BROKER_URL"),
         "puerto": current_app.config.get("MQTT_BROKER_PORT"),
-        "rc_publish_diag": rc_publish,
         "hilos": [t.name for t in threading.enumerate()],
     }
 
