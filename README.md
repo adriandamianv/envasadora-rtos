@@ -34,7 +34,7 @@ python seeds.py && python app.py     # http://localhost:5000  (gerente/1234)
 ```
 
 **Deploy en Render:** ver `backend/render.yaml` (web service gunicorn
-`--workers 1` + PostgreSQL gestionado). Broker MQTT: `broker.hivemq.com:1883`
+`--workers 1` + PostgreSQL gestionado). Broker MQTT: `broker.emqx.io:1883`
 (público — Render no acepta TCP entrante, ver docs/HALLAZGOS.md §3).
 
 ## Tópicos MQTT

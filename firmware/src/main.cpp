@@ -29,7 +29,7 @@
                                   // 0 = peso real del HX711 (ajustar en la parte hx1 de Wokwi)
 static const char* WIFI_SSID   = "Wokwi-GUEST";
 static const char* WIFI_PASS   = "";
-static const char* MQTT_BROKER = "broker.hivemq.com";
+static const char* MQTT_BROKER = "broker.emqx.io";   // hivemq limita IPs de nubes (Render)
 static const int   MQTT_PUERTO = 1883;
 static const char* T_PESO   = "envasadora/ENV01/peso";
 static const char* T_ESTADO = "envasadora/ENV01/estado";

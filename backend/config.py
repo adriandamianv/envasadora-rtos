@@ -24,7 +24,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # MQTT (broker público, mismo que usa el ESP32 en Wokwi)
-    MQTT_BROKER_URL = os.environ.get("MQTT_BROKER_URL", "broker.hivemq.com")
+    MQTT_BROKER_URL = os.environ.get("MQTT_BROKER_URL", "broker.emqx.io")
     MQTT_BROKER_PORT = int(os.environ.get("MQTT_BROKER_PORT", 1883))
     MQTT_CLIENT_ID = f"backend-envasadora-{uuid.uuid4().hex[:8]}"
     MQTT_KEEPALIVE = 60

@@ -16,13 +16,21 @@ bp = Blueprint("ordenes", __name__, url_prefix="/ordenes")
 
 
 def _publicar_cmd(payload: dict) -> None:
-    """Publica un comando y no deja caer la app si el broker está fuera."""
+    """Publica un comando y no deja caer la app si el broker está fuera.
+
+    Flask-MQTT no lanza excepción si el cliente está desconectado: devuelve
+    (rc, mid). Hay que revisar rc, si no el comando se pierde en silencio."""
     topico = f"{current_app.config['TOPIC_BASE']}/cmd"
     try:
-        mqtt.publish(topico, json.dumps(payload))
+        resultado = mqtt.publish(topico, json.dumps(payload), qos=1)
+        rc = resultado[0] if isinstance(resultado, tuple) else getattr(resultado, "rc", 0)
+        if rc != 0:
+            raise ConnectionError(f"publish devolvió rc={rc} (cliente desconectado)")
+        current_app.logger.info("cmd publicado en %s: %s", topico, payload)
     except Exception as exc:
         current_app.logger.warning("No se pudo publicar en %s: %s", topico, exc)
-        flash("Aviso: no se pudo enviar el comando MQTT (broker sin conexión).", "error")
+        flash("Aviso: no se pudo enviar el comando a la máquina (broker sin "
+              "conexión). Vuelve a pulsar Iniciar para reintentar.", "error")
 
 
 @bp.route("/")
