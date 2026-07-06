@@ -67,8 +67,10 @@ struct Orden {
   bool activa;
 };
 
+enum TipoCmd : uint8_t { CMD_PARAR = 0, CMD_INICIAR, CMD_REANUDAR, CMD_REINICIAR };
+
 struct Comando {        // llega por MQTT (backend) o botones (operador)
-  bool iniciar;         // false = parar
+  uint8_t tipo;         // TipoCmd
   char producto[12];
   int  presentacionG;
   int  tamLote;
@@ -232,14 +234,46 @@ static void tarea_control(void*) {
     if (xSemaphoreTake(semInicio, 0) == pdTRUE) {
       if (fsm == PARADA) { fsm = DOSIFICANDO; valvula(true); publicarEstado(); }
       else if (!orden.activa) {
-        Comando porDefecto = { true, "mani", 25, 50, 0 };
+        Comando porDefecto = { CMD_INICIAR, "mani", 25, 50, 0 };
         iniciarOrden(porDefecto);
       }
     }
     Comando cmd;
     if (xQueueReceive(colaCmd, &cmd, 0) == pdTRUE) {
-      if (!cmd.iniciar && orden.activa) { valvula(false); fsm = PARADA; publicarEstado(); }
-      else if (cmd.iniciar && !orden.activa) iniciarOrden(cmd);
+      switch (cmd.tipo) {
+        case CMD_PARAR:
+          if (orden.activa && fsm != PARADA) {
+            valvula(false); fsm = PARADA;
+            Serial.println("[CMD] pausa desde la web");
+            publicarEstado();
+          }
+          break;
+        case CMD_INICIAR:
+          if (!orden.activa) iniciarOrden(cmd);
+          else if (fsm == PARADA) { valvula(true); fsm = DOSIFICANDO; publicarEstado(); }
+          break;
+        case CMD_REANUDAR:
+          if (fsm == PARADA) {
+            valvula(true); fsm = DOSIFICANDO;
+            Serial.println("[CMD] reanudar desde la web");
+            publicarEstado();
+          }
+          break;
+        case CMD_REINICIAR:
+          if (orden.activa) {
+            xSemaphoreTake(mtxEstado, portMAX_DELAY);
+            orden.unidadesOk = 0;
+            orden.rechazos = 0;
+            xSemaphoreGive(mtxEstado);
+            valvula(false);
+            enDescarga = true;          // vacía la funda en curso (y el peso demo)
+            tMarca = millis();
+            fsm = DESCARGA;             // DESCARGA reabre la válvula al terminar
+            Serial.println("[CMD] reinicio de lote desde la web");
+            publicarEstado();
+          }
+          break;
+      }
     }
 
     float peso = 0;
@@ -346,16 +380,22 @@ static void tarea_alarmas(void*) {
 static void mqttCallback(char* topico, byte* payload, unsigned int largo) {
   JsonDocument doc;
   if (deserializeJson(doc, payload, largo) != DeserializationError::Ok) return;
-  Comando c = { false, "mani", 25, 50, 0 };
+  Comando c = { CMD_PARAR, "mani", 25, 50, 0 };
   const char* accion = doc["accion"] | "";
   if (strcmp(accion, "iniciar") == 0) {
-    c.iniciar = true;
+    c.tipo = CMD_INICIAR;
     strlcpy(c.producto, doc["producto"] | "mani", sizeof(c.producto));
     c.presentacionG = doc["presentacion_gr"] | 25;
     c.tamLote       = doc["tam_lote"] | 50;
     const char* lote = doc["lote"] | "";
     if (strlen(lote) > 2) c.numeroLote = atoi(lote + 2);   // "L-0007" -> 7
-  } else if (strcmp(accion, "parar") != 0) {
+  } else if (strcmp(accion, "parar") == 0 || strcmp(accion, "pausar") == 0) {
+    c.tipo = CMD_PARAR;
+  } else if (strcmp(accion, "reanudar") == 0) {
+    c.tipo = CMD_REANUDAR;
+  } else if (strcmp(accion, "reiniciar") == 0) {
+    c.tipo = CMD_REINICIAR;
+  } else {
     return;
   }
   xQueueSend(colaCmd, &c, 0);

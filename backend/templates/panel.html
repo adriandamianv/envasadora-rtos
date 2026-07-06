@@ -3,6 +3,22 @@
 {% block contenido %}
 <h1>Panel en vivo</h1>
 
+{% if session.get('rol') in ('supervisor', 'gerente') %}
+<div class="control-maquina">
+  <span class="etiqueta-control">Control de máquina</span>
+  <form method="post" action="{{ url_for('panel.maquina', accion='pausar') }}">
+    <button type="submit" class="boton chico">⏸ Pausar</button>
+  </form>
+  <form method="post" action="{{ url_for('panel.maquina', accion='reanudar') }}">
+    <button type="submit" class="boton chico">▶ Reanudar</button>
+  </form>
+  <form method="post" action="{{ url_for('panel.maquina', accion='reiniciar') }}"
+        onsubmit="return confirm('¿Reiniciar el lote en curso? Los contadores de la máquina vuelven a cero.');">
+    <button type="submit" class="boton chico peligro">⟳ Reiniciar</button>
+  </form>
+</div>
+{% endif %}
+
 <div class="rejilla">
   <!-- Peso en vivo -->
   <section class="tarjeta">

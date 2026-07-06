@@ -164,3 +164,16 @@ input:focus, select:focus { outline: 1px solid var(--acento); }
 .aviso { padding: 0.6rem 1rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem; }
 .aviso-ok { background: rgba(76, 195, 138, 0.15); color: var(--ok); border: 1px solid var(--ok); }
 .aviso-error, .aviso-message { background: rgba(229, 83, 75, 0.15); color: var(--mal); border: 1px solid var(--mal); }
+
+/* --- control de máquina (pausar / reanudar / reiniciar) --- */
+.control-maquina {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: 0 0 18px; padding: 10px 14px;
+  background: var(--tarjeta, #161a1e); border: 1px solid var(--linea, #262c31);
+  border-radius: 6px;
+}
+.control-maquina form { margin: 0; }
+.etiqueta-control {
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--silencioso, #7d868d); margin-right: 6px;
+}

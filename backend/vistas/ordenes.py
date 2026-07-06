@@ -15,7 +15,7 @@ from vistas.auth import rol_requerido
 bp = Blueprint("ordenes", __name__, url_prefix="/ordenes")
 
 
-def _publicar_cmd(payload: dict) -> None:
+def _publicar_cmd(payload: dict) -> bool:
     """Publica un comando y no deja caer la app si el broker está fuera.
 
     Flask-MQTT no lanza excepción si el cliente está desconectado: devuelve
@@ -27,10 +27,12 @@ def _publicar_cmd(payload: dict) -> None:
         if rc != 0:
             raise ConnectionError(f"publish devolvió rc={rc} (cliente desconectado)")
         current_app.logger.info("cmd publicado en %s: %s", topico, payload)
+        return True
     except Exception as exc:
         current_app.logger.warning("No se pudo publicar en %s: %s", topico, exc)
         flash("Aviso: no se pudo enviar el comando a la máquina (broker sin "
-              "conexión). Vuelve a pulsar Iniciar para reintentar.", "error")
+              "conexión). Vuelve a intentarlo en unos segundos.", "error")
+        return False
 
 
 @bp.route("/")
