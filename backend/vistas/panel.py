@@ -28,6 +28,14 @@ def inicio():
     )
 
 
+@bp.route("/diapositiva")
+def diapositiva():
+    """Diapositivas de la exposición del proyecto (deck autocontenido).
+    Público: no requiere sesión, para poder proyectarlo directo."""
+    from flask import current_app
+    return current_app.send_static_file("diapositiva.html")
+
+
 @bp.route("/salud")
 def salud():
     """Diagnóstico: estado del backend, simulador embebido e hilos vivos."""
