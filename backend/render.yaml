@@ -1,5 +1,9 @@
 # Blueprint de Render: servicio web Python + PostgreSQL gestionado.
-# Nota: --workers 1 es obligatorio (Flask-MQTT mantiene una sola conexión).
+#
+# --workers 1: un solo proceso concentra el hilo del simulador embebido y la
+# conexión MQTT (varios workers duplicarían telemetría y contadores). Los
+# hilos de máquina arrancan de forma perezosa dentro del worker (watchdog en
+# app.py), así sobreviven al fork de gunicorn.
 services:
   - type: web
     name: envasadora-backend
@@ -15,8 +19,14 @@ services:
           property: connectionString
       - key: SECRET_KEY
         generateValue: true
+      # Simulador embebido ON: Render se ve vivo sin depender de Wokwi.
+      - key: SIMULADOR_AUTONOMO
+        value: "1"
+      # Mismo broker que usa el ESP32 en el firmware (broker.emqx.io).
+      # hivemq limita las IPs de las nubes; emqx no. Solo se usa para el
+      # camino del ESP32 real; la demo autónoma no depende del broker.
       - key: MQTT_BROKER_URL
-        value: broker.hivemq.com
+        value: broker.emqx.io
       - key: MQTT_BROKER_PORT
         value: "1883"
       - key: TOPIC_BASE

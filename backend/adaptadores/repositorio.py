@@ -61,6 +61,46 @@ def iniciar_orden(orden_id: int) -> Lote | None:
     return lote
 
 
+def nuevo_lote(orden_id: int) -> Lote | None:
+    """Abre un lote nuevo sobre una orden ya en proceso (reinicio de lote
+    desde el panel): la producción previa queda en el histórico y los
+    contadores arrancan de cero en un lote fresco."""
+    orden = db.session.get(OrdenProduccion, orden_id)
+    if orden is None or orden.estado != "en_proceso":
+        return None
+    secuencia = (db.session.query(func.max(Lote.id)).scalar() or 0) + 1
+    lote = Lote(
+        numero_lote=reglas.generar_numero_lote(secuencia),
+        orden_id=orden.id,
+        fecha_produccion=date.today(),
+        fecha_caducidad=reglas.calcular_fecha_caducidad(date.today()),
+    )
+    db.session.add(lote)
+    db.session.commit()
+    return lote
+
+
+def completar_orden(orden_id: int) -> bool:
+    """Marca la orden como completada (usado por el simulador al hacer
+    relevo entre su orden de demostración y una orden real del usuario)."""
+    orden = db.session.get(OrdenProduccion, orden_id)
+    if orden is None or not reglas.transicion_valida(orden.estado, "completada"):
+        return False
+    orden.estado = "completada"
+    db.session.commit()
+    return True
+
+
+def producto_demo() -> Producto | None:
+    """Un producto cualquiera para la orden autónoma del simulador
+    (el de menor presentación: Maní/Pasas 25 g)."""
+    return db.session.query(Producto).order_by(Producto.presentacion_gr).first()
+
+
+def lote_por_numero(numero_lote: str) -> Lote | None:
+    return db.session.query(Lote).filter_by(numero_lote=numero_lote).first()
+
+
 def detener_orden(orden_id: int) -> bool:
     """Devuelve la orden a 'pendiente' (paro manual desde el panel)."""
     orden = db.session.get(OrdenProduccion, orden_id)

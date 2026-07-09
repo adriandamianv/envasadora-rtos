@@ -38,3 +38,9 @@ class Config:
 
     # Tolerancia de peso aceptada en gramos (± sobre el objetivo)
     TOLERANCIA_GR = float(os.environ.get("TOLERANCIA_GR", 1.0))
+
+    # Simulador embebido: corre la FSM del ESP32 dentro del backend para que
+    # Render esté vivo sin depender de una pestaña de Wokwi. Activado por
+    # defecto (la demo debe verse viva); ponlo en 0 para escuchar solo al
+    # ESP32 real por MQTT.
+    SIMULADOR_AUTONOMO = os.environ.get("SIMULADOR_AUTONOMO", "1") == "1"

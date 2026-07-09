@@ -30,17 +30,24 @@ def inicio():
 
 @bp.route("/salud")
 def salud():
-    """Diagnóstico: estado del backend, conexión MQTT y publish de prueba."""
+    """Diagnóstico: estado del backend, simulador embebido e hilos vivos."""
     import threading
     from flask import current_app
-    from adaptadores import mqtt_in
+    from adaptadores import mqtt_in, simulador
 
     return {
         "estado": "ok",
-        "mqtt_conectado": mqtt_in.conectado(),
-        "publish_diag_confirmado": mqtt_in.publicar("diag", {"ping": 1}, timeout=3),
-        "broker": current_app.config.get("MQTT_BROKER_URL"),
-        "puerto": current_app.config.get("MQTT_BROKER_PORT"),
+        "simulador": {
+            "activo": simulador.activo(),
+            "hilo_vivo": simulador.vivo(),
+            "latido_hace_s": simulador.latido_hace(),
+        },
+        "mqtt": {
+            "conectado": mqtt_in.conectado(),
+            "latido_hace_s": mqtt_in.latido_hace(),
+            "broker": current_app.config.get("MQTT_BROKER_URL"),
+            "puerto": current_app.config.get("MQTT_BROKER_PORT"),
+        },
         "hilos": [t.name for t in threading.enumerate()],
     }
 

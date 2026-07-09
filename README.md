@@ -41,6 +41,17 @@ python seeds.py && python app.py     # http://localhost:5000  (gerente/1234)
 `--workers 1` + PostgreSQL gestionado). Broker MQTT: `broker.emqx.io:1883`
 (público — Render no acepta TCP entrante, ver docs/HALLAZGOS.md §3).
 
+**Simulador embebido (Render autónomo):** con `SIMULADOR_AUTONOMO=1` (default)
+el backend corre la FSM del ESP32 en un hilo propio (`adaptadores/simulador.py`)
+y alimenta el panel por el mismo camino que el ESP32 real
+(`mqtt_in.despachar`). Así Render se ve **vivo sin depender de una pestaña de
+Wokwi**. Los hilos de máquina (simulador + MQTT) arrancan de forma perezosa
+dentro del worker de gunicorn y un *watchdog* (`before_request` en `app.py`)
+los revive si mueren o si gunicorn hace fork — esto resuelve de raíz el bug
+del hilo de red que quedaba `connected=True` pero sin atender. Diagnóstico en
+vivo: `GET /salud`. Poné `SIMULADOR_AUTONOMO=0` para escuchar solo al ESP32
+real por MQTT.
+
 ## Tópicos MQTT
 
 | Tópico | Dirección | Payload |

@@ -15,10 +15,10 @@ bp = Blueprint("ordenes", __name__, url_prefix="/ordenes")
 
 
 def _publicar_cmd(payload: dict) -> bool:
-    """Publica un comando con confirmación del broker (ver adaptadores.mqtt_in)."""
-    from adaptadores import mqtt_in
+    """Entrega un comando a la máquina (simulador embebido y/o ESP32 real)."""
+    from adaptadores import despacho
 
-    if mqtt_in.publicar("cmd", payload):
+    if despacho.enviar_comando(payload):
         return True
     flash("Aviso: no se pudo enviar el comando a la máquina (broker sin "
           "conexión). Vuelve a intentarlo en unos segundos.", "error")

@@ -28,10 +28,22 @@ def create_app(iniciar_mqtt: bool = True) -> Flask:
     app.register_blueprint(inventario.bp)
     app.register_blueprint(reportes.bp)
 
-    # Adaptador MQTT (se omite en seeds/pruebas)
+    # Adaptadores de máquina (MQTT real + simulador embebido). Se omiten en
+    # seeds/pruebas. NO arrancan hilos aquí: el arranque es perezoso dentro
+    # del worker (watchdog) para sobrevivir al fork de gunicorn.
     if iniciar_mqtt:
-        from adaptadores.mqtt_in import init_mqtt
+        from adaptadores.mqtt_in import asegurar_mqtt, init_mqtt
+        from adaptadores.simulador import asegurar_simulador, init_simulador
         init_mqtt(app)
+        init_simulador(app)
+
+        @app.before_request
+        def _watchdog_maquina():
+            # Idempotente y barato: si un hilo no existe, murió o venimos de
+            # un fork, lo revive en ESTE proceso. Así el panel nunca queda
+            # "muerto" por un worker reciclado o forkeado.
+            asegurar_mqtt()
+            asegurar_simulador()
 
     # Asegura tablas y datos iniciales (idempotente): en Render no hay shell
     # para correr seeds.py, así que la app se autosiembra si la base está vacía.
